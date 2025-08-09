@@ -20,7 +20,7 @@ export class SyncService {
   /**
    * Sync all user's game data
    */
-  async syncAllData(maxPages: number = 100, progressCallback?: (progress: number, message: string) => void): Promise<SyncResult> {
+  async syncAllData(maxPages: number = Number.POSITIVE_INFINITY, progressCallback?: (progress: number, message: string) => void): Promise<SyncResult> {
     const startTime = Date.now();
     const result: SyncResult = {
       success: false,

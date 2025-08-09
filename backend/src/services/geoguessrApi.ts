@@ -121,7 +121,7 @@ export class GeoGuessrApiClient {
   /**
    * Get all game tokens from feed (with pagination)
    */
-  async getAllGameTokens(maxPages: number = 100): Promise<string[]> {
+  async getAllGameTokens(maxPages: number = Number.POSITIVE_INFINITY): Promise<string[]> {
     const gameTokens: string[] = [];
     const seenTokens = new Set<string>(); // Use Set for faster lookups
     let paginationToken: string | undefined;
@@ -133,9 +133,10 @@ export class GeoGuessrApiClient {
     while (pageCount < maxPages) {
       try {
         const feed = await this.getFeed(paginationToken);
-        
-        console.log(`📄 Page ${pageCount + 1}: ${feed.entries.length} entries`);
-        
+        pageCount++;
+
+        console.log(`📄 Page ${pageCount}: ${feed.entries.length} entries`);
+
         let newTokensThisPage = 0;
 
         // Extract game tokens from this page
@@ -177,16 +178,16 @@ export class GeoGuessrApiClient {
         }
 
         paginationToken = feed.paginationToken;
-        pageCount++;
 
         // Small delay to be respectful to the API
         await new Promise(resolve => setTimeout(resolve, 800));
 
       } catch (error) {
         console.error(`❌ Failed to fetch page ${pageCount + 1}:`, error);
+        // Count the failed page to avoid infinite loops
+        pageCount++;
         // Don't break immediately, try next page after a longer delay
         await new Promise(resolve => setTimeout(resolve, 2000));
-        pageCount++;
         continue;
       }
     }
