@@ -8,6 +8,7 @@ import { connectDatabase } from './config/database';
 
 // Route imports
 import mapRoutes from './routes/map';
+import docsRoutes from './routes/docs';
 
 // Middleware imports
 import { errorHandler } from './middleware/errorHandler';
@@ -70,6 +71,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/map', mapRoutes); // Key endpoint for interactive world map
+app.use('/api/docs', docsRoutes); // API documentation
 
 // API documentation
 app.get('/api', (req, res) => {
@@ -77,13 +79,26 @@ app.get('/api', (req, res) => {
     name: 'GeoGuessr Stats API',
     version: '1.0.0',
     description: 'REST API for GeoGuessr game statistics and analytics',
+    documentation: {
+      interactive: '/api/docs/interactive',
+      full: '/api/docs/markdown',
+      quick: '/api/docs/quick',
+      json: '/api/docs'
+    },
     endpoints: {
       map: '/api/map',
-      health: '/health'
+      health: '/health',
+      docs: '/api/docs'
     },
     features: {
       'Interactive Map Data': '/api/map/rounds',
-      'Country Performance': '/api/map/countries'
+      'Country Performance': '/api/map/countries',
+      'API Documentation': '/api/docs/interactive'
+    },
+    quickStart: {
+      healthCheck: `${req.protocol}://${req.get('host')}/health`,
+      documentation: `${req.protocol}://${req.get('host')}/api/docs/interactive`,
+      mapData: `${req.protocol}://${req.get('host')}/api/map/rounds?limit=5`
     }
   });
 });
