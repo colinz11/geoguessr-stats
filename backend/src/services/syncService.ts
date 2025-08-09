@@ -206,31 +206,34 @@ export class SyncService {
         continue;
       }
 
+      const actualCode = roundData.streakLocationCode?.toUpperCase();
+      const guessCode = guessData.streakLocationCode?.toUpperCase();
+
       const round: any = {
         game_id: game._id,
         user_id: this.user._id,
         round_number: i + 1,
-        
+
         // Actual location
         actual_lat: roundData.lat,
         actual_lng: roundData.lng,
-        actual_country_code: roundData.streakLocationCode,
-        
+        actual_country_code: actualCode,
+
         // Player's guess
         guess_lat: guessData.lat,
         guess_lng: guessData.lng,
-        
+
         // Performance metrics
         score: guessData.roundScoreInPoints,
         distance_meters: guessData.distanceInMeters,
         distance_km: guessData.distanceInMeters / 1000, // Convert to km
         time_taken: guessData.time,
-        
+
         // Calculated fields
-        is_correct_country: roundData.streakLocationCode === guessData.streakLocationCode,
-        country_guess: guessData.streakLocationCode || undefined,
-        country_actual: roundData.streakLocationCode,
-        
+        is_correct_country: actualCode === guessCode,
+        country_guess: guessCode || undefined,
+        country_actual: actualCode,
+
         // Street View info
         pano_id: roundData.panoId,
         heading: roundData.heading,
