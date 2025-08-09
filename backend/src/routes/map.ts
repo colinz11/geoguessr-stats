@@ -37,7 +37,7 @@ router.get('/rounds', asyncHandler(async (req: express.Request, res: express.Res
   }
 
   if (countries) {
-    const countryList = (countries as string).split(',').map((c: string) => c.trim().toLowerCase());
+    const countryList = (countries as string).split(',').map((c: string) => c.trim().toUpperCase());
     filter.actual_country_code = { $in: countryList };
   }
 

@@ -145,30 +145,32 @@ export default function InteractiveMap() {
             </Marker>
             
             {/* Guess location marker */}
-            <Marker
-              position={guessPos}
-              icon={createMarkerIcon('#ef4444', true)}
-            >
-              <Popup>
-                <div className="text-sm min-w-[200px]">
-                  <div className="font-semibold text-red-700 mb-1">🎯 Your Guess</div>
-                  <div className="space-y-1">
-                    <div><strong>Round:</strong> {round.round_number}</div>
-                    <div><strong>Guessed:</strong> {guessCountryName}</div>
-                    <div><strong>Distance:</strong> {formatDistance(round.distance_km)}</div>
-                    <div className={round.is_correct_country ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                      {round.is_correct_country ? '✓ Correct Country!' : '✗ Wrong Country'}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2 pt-1 border-t">
-                      Actual: {actualCountryName}
+            {round.country_guess && (
+              <Marker
+                position={guessPos}
+                icon={createMarkerIcon('#ef4444', true)}
+              >
+                <Popup>
+                  <div className="text-sm min-w-[200px]">
+                    <div className="font-semibold text-red-700 mb-1">🎯 Your Guess</div>
+                    <div className="space-y-1">
+                      <div><strong>Round:</strong> {round.round_number}</div>
+                      <div><strong>Guessed:</strong> {guessCountryName}</div>
+                      <div><strong>Distance:</strong> {formatDistance(round.distance_km)}</div>
+                      <div className={round.is_correct_country ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                        {round.is_correct_country ? '✓ Correct Country!' : '✗ Wrong Country'}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2 pt-1 border-t">
+                        Actual: {actualCountryName}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Popup>
-            </Marker>
-            
+                </Popup>
+              </Marker>
+            )}
+
             {/* Connection line */}
-            {filters.showConnections && (
+            {filters.showConnections && round.country_guess && (
               <Polyline
                 positions={[actualPos, guessPos]}
                 color={markerColor}
