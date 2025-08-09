@@ -131,6 +131,33 @@ export const apiClient = {
   } = {}): Promise<CountriesResponse> => 
     api.get('/api/map/countries', { params }).then(res => res.data),
 
+  // Data refresh/sync endpoints
+  refreshAllData: (options: {
+    userId?: string;
+    maxPages?: number;
+  } = {}): Promise<{
+    success: boolean;
+    message: string;
+    data?: {
+      gamesAdded: number;
+      roundsAdded: number;
+      totalGames: number;
+      totalRounds: number;
+    };
+  }> => {
+    return api.post('/api/sync/refresh', options).then(res => res.data);
+  },
+
+  getSyncStatus: (): Promise<{
+    success: boolean;
+    data: {
+      isRunning: boolean;
+      progress?: number;
+      message?: string;
+      lastSync?: string;
+    };
+  }> => api.get('/api/sync/status').then(res => res.data),
+
   // API documentation
   getApiInfo: () => api.get('/api'),
   getDocs: () => api.get('/api/docs'),

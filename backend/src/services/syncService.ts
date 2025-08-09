@@ -20,7 +20,7 @@ export class SyncService {
   /**
    * Sync all user's game data
    */
-  async syncAllData(maxPages: number = 5): Promise<SyncResult> {
+  async syncAllData(maxPages: number = 100, progressCallback?: (progress: number, message: string) => void): Promise<SyncResult> {
     const startTime = Date.now();
     const result: SyncResult = {
       success: false,
@@ -36,6 +36,7 @@ export class SyncService {
 
       // Phase 1: Get all game tokens from feed
       console.log('📋 Phase 1: Fetching game tokens from feed...');
+      progressCallback?.(35, 'Fetching all game data from GeoGuessr feed...');
       const gameTokens = await this.apiClient.getAllGameTokens(maxPages);
       
       if (gameTokens.length === 0) {
@@ -47,12 +48,17 @@ export class SyncService {
 
       // Phase 2: Process each game
       console.log(`🎮 Phase 2: Processing ${gameTokens.length} games...`);
+      progressCallback?.(50, `Processing ${gameTokens.length} games...`);
       
       for (let i = 0; i < gameTokens.length; i++) {
         const gameToken = gameTokens[i];
         
         try {
           console.log(`📊 Processing game ${i + 1}/${gameTokens.length}: ${gameToken}`);
+          
+          // Update progress
+          const gameProgress = 50 + Math.floor((i / gameTokens.length) * 40);
+          progressCallback?.(gameProgress, `Processing game ${i + 1}/${gameTokens.length}...`);
           
           // Check if game already exists
           const existingGame = await Game.findOne({ game_token: gameToken });

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import { LatLngExpression } from 'leaflet';
+import { type LatLngExpression } from 'leaflet';
 import L from 'leaflet';
 import Layout from './Layout';
 import Loading from './Loading';
+import RefreshButton from './RefreshButton';
 import { apiClient, type RoundData } from '../lib/api';
 import { formatScore, formatDistance, getMarkerColor, generateDemoUserId } from '../lib/utils';
+import { getCountryName } from '../lib/countries';
 import { Filter, RotateCcw, MapPin } from 'lucide-react';
 
 // Fix for default markers in react-leaflet
@@ -65,7 +67,10 @@ export default function InteractiveMap() {
       setError(null);
       
       const userId = generateDemoUserId();
-      const params: any = { userId, limit: 500 };
+      const params: any = { limit: 500 };
+      
+      // Only include userId if it's not empty
+      if (userId) params.userId = userId;
       
       if (filters.minScore > 0) params.minScore = filters.minScore;
       if (filters.maxScore < 5000) params.maxScore = filters.maxScore;
@@ -92,6 +97,91 @@ export default function InteractiveMap() {
       showConnections: true,
     });
   };
+
+  // Memoize the map to prevent re-renders
+  const mapComponent = useMemo(() => (
+    <MapContainer
+      center={[20, 0]}
+      zoom={2}
+      style={{ height: '100%', width: '100%' }}
+      className="rounded-xl"
+      key="geoguessr-map"
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      
+      {rounds.map((round, index) => {
+        const actualPos: LatLngExpression = [round.actual_lat, round.actual_lng];
+        const guessPos: LatLngExpression = [round.guess_lat, round.guess_lng];
+        const markerColor = getMarkerColor(round.score);
+        const actualCountryName = getCountryName(round.actual_country_code);
+        const guessCountryName = round.country_guess ? getCountryName(round.country_guess) : 'Unknown';
+        
+        return (
+          <React.Fragment key={`round-${index}-${round.round_number}`}>
+            {/* Actual location marker */}
+            <Marker
+              position={actualPos}
+              icon={createMarkerIcon(markerColor, false)}
+            >
+              <Popup>
+                <div className="text-sm min-w-[200px]">
+                  <div className="font-semibold text-blue-700 mb-1">📍 Actual Location</div>
+                  <div className="space-y-1">
+                    <div><strong>Round:</strong> {round.round_number}</div>
+                    <div><strong>Country:</strong> {actualCountryName} ({round.actual_country_code})</div>
+                    <div><strong>Score:</strong> <span className={round.score >= 4000 ? 'text-green-600' : round.score >= 2000 ? 'text-yellow-600' : 'text-red-600'}>{formatScore(round.score)}</span></div>
+                    <div><strong>Distance:</strong> {formatDistance(round.distance_km)}</div>
+                    {round.game.map_name && (
+                      <div className="text-xs text-gray-500 mt-2 pt-1 border-t">
+                        Map: {round.game.map_name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+            
+            {/* Guess location marker */}
+            <Marker
+              position={guessPos}
+              icon={createMarkerIcon('#ef4444', true)}
+            >
+              <Popup>
+                <div className="text-sm min-w-[200px]">
+                  <div className="font-semibold text-red-700 mb-1">🎯 Your Guess</div>
+                  <div className="space-y-1">
+                    <div><strong>Round:</strong> {round.round_number}</div>
+                    <div><strong>Guessed:</strong> {guessCountryName}</div>
+                    <div><strong>Distance:</strong> {formatDistance(round.distance_km)}</div>
+                    <div className={round.is_correct_country ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                      {round.is_correct_country ? '✓ Correct Country!' : '✗ Wrong Country'}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2 pt-1 border-t">
+                      Actual: {actualCountryName}
+                    </div>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+            
+            {/* Connection line */}
+            {filters.showConnections && (
+              <Polyline
+                positions={[actualPos, guessPos]}
+                color={markerColor}
+                weight={2}
+                opacity={0.7}
+                dashArray={round.is_correct_country ? undefined : '5, 5'}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </MapContainer>
+  ), [rounds, filters.showConnections]);
 
   if (loading) {
     return (
@@ -121,14 +211,15 @@ export default function InteractiveMap() {
     <Layout currentPage="Interactive Map">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Interactive Map</h1>
             <p className="mt-2 text-gray-600">
               View your GeoGuessr guesses plotted on an interactive world map
             </p>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <RefreshButton onRefreshComplete={loadMapData} />
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="btn-secondary flex items-center"
@@ -225,75 +316,7 @@ export default function InteractiveMap() {
         {/* Map */}
         <div className="card p-0 overflow-hidden">
           <div className="h-96 md:h-[600px]">
-            <MapContainer
-              center={[20, 0]}
-              zoom={2}
-              style={{ height: '100%', width: '100%' }}
-              className="rounded-xl"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              
-              {rounds.map((round, index) => {
-                const actualPos: LatLngExpression = [round.actual_lat, round.actual_lng];
-                const guessPos: LatLngExpression = [round.guess_lat, round.guess_lng];
-                const markerColor = getMarkerColor(round.score);
-                
-                return (
-                  <React.Fragment key={index}>
-                    {/* Actual location marker */}
-                    <Marker
-                      position={actualPos}
-                      icon={createMarkerIcon(markerColor, false)}
-                    >
-                      <Popup>
-                        <div className="text-sm">
-                          <div className="font-semibold">Actual Location</div>
-                          <div>Round {round.round_number}</div>
-                          <div>{round.actual_country_code}</div>
-                          <div>Score: {formatScore(round.score)}</div>
-                          <div>Distance: {formatDistance(round.distance_km)}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {round.game.map_name}
-                          </div>
-                        </div>
-                      </Popup>
-                    </Marker>
-                    
-                    {/* Guess location marker */}
-                    <Marker
-                      position={guessPos}
-                      icon={createMarkerIcon('#ef4444', true)}
-                    >
-                      <Popup>
-                        <div className="text-sm">
-                          <div className="font-semibold">Your Guess</div>
-                          <div>Round {round.round_number}</div>
-                          <div>Guessed: {round.country_guess || 'Unknown'}</div>
-                          <div>Distance: {formatDistance(round.distance_km)}</div>
-                          <div className={round.is_correct_country ? 'text-green-600' : 'text-red-600'}>
-                            {round.is_correct_country ? '✓ Correct Country' : '✗ Wrong Country'}
-                          </div>
-                        </div>
-                      </Popup>
-                    </Marker>
-                    
-                    {/* Connection line */}
-                    {filters.showConnections && (
-                      <Polyline
-                        positions={[actualPos, guessPos]}
-                        color={markerColor}
-                        weight={2}
-                        opacity={0.7}
-                        dashArray={round.is_correct_country ? undefined : '5, 5'}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </MapContainer>
+            {mapComponent}
           </div>
         </div>
 

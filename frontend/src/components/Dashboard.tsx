@@ -4,8 +4,10 @@ import { BarChart3, MapPin, Globe, Target, TrendingUp, Users } from 'lucide-reac
 import Layout from './Layout';
 import StatCard from './StatCard';
 import Loading from './Loading';
+import RefreshButton from './RefreshButton';
 import { apiClient, type RoundData, type CountryPerformance } from '../lib/api';
 import { formatNumber, formatScore, formatPercentage, generateDemoUserId } from '../lib/utils';
+import { getCountryName } from '../lib/countries';
 
 interface DashboardStats {
   totalGames: number;
@@ -34,10 +36,18 @@ export default function Dashboard() {
       
       const userId = generateDemoUserId();
       
+      // Prepare API parameters (only include userId if it's not empty)
+      const roundsParams: any = { limit: 100 };
+      const countriesParams: any = {};
+      if (userId) {
+        roundsParams.userId = userId;
+        countriesParams.userId = userId;
+      }
+      
       // Fetch rounds and countries data in parallel
       const [roundsResponse, countriesResponse] = await Promise.all([
-        apiClient.getMapRounds({ userId, limit: 100 }),
-        apiClient.getCountries({ userId })
+        apiClient.getMapRounds(roundsParams),
+        apiClient.getCountries(countriesParams)
       ]);
 
       if (roundsResponse.success && countriesResponse.success) {
@@ -101,11 +111,14 @@ export default function Dashboard() {
     <Layout currentPage="Dashboard">
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">
-            Overview of your GeoGuessr performance and statistics
-          </p>
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-2 text-gray-600">
+              Overview of your GeoGuessr performance and statistics
+            </p>
+          </div>
+          <RefreshButton onRefreshComplete={loadDashboardData} />
         </div>
 
         {/* Stats Grid */}
@@ -218,10 +231,10 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {country.country_code}
+                        {getCountryName(country.country_code)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {country.totalRounds} rounds
+                        {country.totalRounds} rounds • {country.country_code}
                       </div>
                     </div>
                   </div>

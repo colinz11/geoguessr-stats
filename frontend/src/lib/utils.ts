@@ -57,11 +57,16 @@ export function formatTime(seconds: number): string {
 
 // Get country flag emoji (basic implementation)
 export function getCountryFlag(countryCode: string): string {
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+  if (!countryCode || countryCode.length !== 2) return '🌍';
+  try {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  } catch {
+    return '🌍';
+  }
 }
 
 // Get map marker color based on score
@@ -86,5 +91,5 @@ export function debounce<T extends (...args: any[]) => any>(
 
 // Generate random user ID for demo purposes
 export function generateDemoUserId(): string {
-  return '5feb86db892bf00001a9de92'; // Using the test user ID from our backend
+  return ''; // Return empty string to show all data for demo
 }

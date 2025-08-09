@@ -121,18 +121,22 @@ export class GeoGuessrApiClient {
   /**
    * Get all game tokens from feed (with pagination)
    */
-  async getAllGameTokens(maxPages: number = 10): Promise<string[]> {
+  async getAllGameTokens(maxPages: number = 100): Promise<string[]> {
     const gameTokens: string[] = [];
+    const seenTokens = new Set<string>(); // Use Set for faster lookups
     let paginationToken: string | undefined;
     let pageCount = 0;
+    let emptyPagesCount = 0;
 
-    console.log(`📋 Fetching game tokens (max ${maxPages} pages)...`);
+    console.log(`📋 Fetching ALL game tokens (max ${maxPages} pages)...`);
 
     while (pageCount < maxPages) {
       try {
         const feed = await this.getFeed(paginationToken);
         
         console.log(`📄 Page ${pageCount + 1}: ${feed.entries.length} entries`);
+        
+        let newTokensThisPage = 0;
 
         // Extract game tokens from this page
         for (const entry of feed.entries) {
@@ -140,8 +144,10 @@ export class GeoGuessrApiClient {
             try {
               const payloads = this.parseGamePayload(entry.payload);
               for (const payload of payloads) {
-                if (payload.gameToken && !gameTokens.includes(payload.gameToken)) {
+                if (payload.gameToken && !seenTokens.has(payload.gameToken)) {
+                  seenTokens.add(payload.gameToken);
                   gameTokens.push(payload.gameToken);
+                  newTokensThisPage++;
                 }
               }
             } catch (error) {
@@ -150,9 +156,23 @@ export class GeoGuessrApiClient {
           }
         }
 
+        console.log(`   → Found ${newTokensThisPage} new game tokens on this page`);
+
+        // If no new tokens found, increment empty pages counter
+        if (newTokensThisPage === 0) {
+          emptyPagesCount++;
+          // If we've had 3 consecutive pages with no new tokens, likely we've seen all data
+          if (emptyPagesCount >= 3) {
+            console.log('📄 Multiple pages with no new data, likely reached end');
+            break;
+          }
+        } else {
+          emptyPagesCount = 0; // Reset counter if we found new tokens
+        }
+
         // Check if there's more data
         if (!feed.paginationToken) {
-          console.log('📄 Reached end of feed');
+          console.log('📄 Reached end of feed (no pagination token)');
           break;
         }
 
@@ -160,15 +180,18 @@ export class GeoGuessrApiClient {
         pageCount++;
 
         // Small delay to be respectful to the API
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
       } catch (error) {
         console.error(`❌ Failed to fetch page ${pageCount + 1}:`, error);
-        break;
+        // Don't break immediately, try next page after a longer delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        pageCount++;
+        continue;
       }
     }
 
-    console.log(`✅ Found ${gameTokens.length} unique game tokens`);
+    console.log(`✅ Found ${gameTokens.length} unique game tokens across ${pageCount} pages`);
     return gameTokens;
   }
 }

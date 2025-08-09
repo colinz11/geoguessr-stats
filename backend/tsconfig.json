@@ -34,7 +34,6 @@
     "src/routes/games.ts",
     "src/routes/rounds.ts", 
     "src/routes/stats.ts",
-    "src/routes/sync.ts",
     "src/middleware/validation.ts"
   ]
 }

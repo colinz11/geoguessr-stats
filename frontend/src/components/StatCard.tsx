@@ -1,11 +1,10 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   color?: 'primary' | 'green' | 'yellow' | 'red' | 'gray';
   trend?: {
     value: number;

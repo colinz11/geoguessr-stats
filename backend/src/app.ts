@@ -8,6 +8,7 @@ import { connectDatabase } from './config/database';
 
 // Route imports
 import mapRoutes from './routes/map';
+import syncRoutes from './routes/sync';
 import docsRoutes from './routes/docs';
 
 // Middleware imports
@@ -71,6 +72,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/map', mapRoutes); // Key endpoint for interactive world map
+app.use('/api/sync', syncRoutes); // Data synchronization endpoints
 app.use('/api/docs', docsRoutes); // API documentation
 
 // API documentation
@@ -87,18 +89,21 @@ app.get('/api', (req, res) => {
     },
     endpoints: {
       map: '/api/map',
+      sync: '/api/sync',
       health: '/health',
       docs: '/api/docs'
     },
     features: {
       'Interactive Map Data': '/api/map/rounds',
       'Country Performance': '/api/map/countries',
+      'Data Synchronization': '/api/sync/refresh',
       'API Documentation': '/api/docs/interactive'
     },
     quickStart: {
       healthCheck: `${req.protocol}://${req.get('host')}/health`,
       documentation: `${req.protocol}://${req.get('host')}/api/docs/interactive`,
-      mapData: `${req.protocol}://${req.get('host')}/api/map/rounds?limit=5`
+      mapData: `${req.protocol}://${req.get('host')}/api/map/rounds?limit=5`,
+      syncData: `${req.protocol}://${req.get('host')}/api/sync/refresh`
     }
   });
 });
