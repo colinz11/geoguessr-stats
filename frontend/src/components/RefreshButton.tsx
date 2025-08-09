@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { apiClient } from '../lib/api';
-import { generateDemoUserId } from '../lib/utils';
 
 interface RefreshButtonProps {
   onRefreshComplete?: () => void;
@@ -16,10 +15,8 @@ export default function RefreshButton({ onRefreshComplete, className = '' }: Ref
     try {
       setIsRefreshing(true);
       
-      // Call the real sync API endpoint with pagination for complete data
-      const response = await apiClient.refreshAllData({
-        maxPages: 100 // Fetch up to 100 pages for complete sync
-      });
+      // Call the sync API endpoint and paginate until the end
+      const response = await apiClient.refreshAllData();
       
       if (response.success) {
         setLastRefresh(new Date().toLocaleTimeString());

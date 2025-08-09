@@ -81,15 +81,15 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // Initialize sync service
     const syncService = new SyncService(apiClient, user);
 
-    // Run full sync with unlimited pagination (set high limit)
-    const maxPages = req.body.maxPages || 100; // Allow up to 100 pages by default
-    
+    // Run full sync, paginate until end unless a limit is provided
+    const maxPages = req.body.maxPages; // Undefined means no manual limit
+
     // Progress callback to update sync status
     const progressCallback = (progress: number, message: string) => {
       syncStatus.progress = progress;
       syncStatus.message = message;
     };
-    
+
     const syncResult = await syncService.syncAllData(maxPages, progressCallback);
 
     if (!syncResult.success) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { type LatLngExpression } from 'leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import Layout from './Layout';
 import Loading from './Loading';
 import RefreshButton from './RefreshButton';
