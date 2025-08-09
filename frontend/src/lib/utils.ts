@@ -69,16 +69,17 @@ export function getCountryFlag(countryCode: string): string {
   }
 }
 
-// Get map marker color based on score
+// Get map marker color based on score using a green to red gradient
+// Score ranges from 0-5000 with higher scores indicating closer guesses
 export function getMarkerColor(score: number): string {
-  if (score >= 4500) return '#16a34a'; // green-600
-  if (score >= 3000) return '#ca8a04'; // yellow-600
-  if (score >= 1500) return '#ea580c'; // orange-600
-  return '#dc2626'; // red-600
+  const clamped = Math.max(0, Math.min(5000, score));
+  const ratio = clamped / 5000; // 0 => worst, 1 => best
+  const hue = ratio * 120; // 0 = red, 120 = green
+  return `hsl(${hue}, 100%, 40%)`;
 }
 
 // Debounce function for search inputs
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
