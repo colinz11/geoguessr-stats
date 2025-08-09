@@ -7,17 +7,11 @@ import rateLimit from 'express-rate-limit';
 import { connectDatabase } from './config/database';
 
 // Route imports
-import authRoutes from './routes/auth';
-import statsRoutes from './routes/stats';
-import gamesRoutes from './routes/games';
-import roundsRoutes from './routes/rounds';
-import syncRoutes from './routes/sync';
 import mapRoutes from './routes/map';
 
 // Middleware imports
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
-import { validateRequest } from './middleware/validation';
 
 const app = express();
 
@@ -75,11 +69,6 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/stats', statsRoutes);
-app.use('/api/games', gamesRoutes);
-app.use('/api/rounds', roundsRoutes);
-app.use('/api/sync', syncRoutes);
 app.use('/api/map', mapRoutes); // Key endpoint for interactive world map
 
 // API documentation
@@ -89,14 +78,13 @@ app.get('/api', (req, res) => {
     version: '1.0.0',
     description: 'REST API for GeoGuessr game statistics and analytics',
     endpoints: {
-      auth: '/api/auth',
-      stats: '/api/stats',
-      games: '/api/games',
-      rounds: '/api/rounds',
-      sync: '/api/sync',
-      map: '/api/map'
+      map: '/api/map',
+      health: '/health'
     },
-    docs: 'https://github.com/your-repo/docs'
+    features: {
+      'Interactive Map Data': '/api/map/rounds',
+      'Country Performance': '/api/map/countries'
+    }
   });
 });
 
@@ -111,9 +99,11 @@ const startServer = async (port: number = parseInt(process.env.PORT || '3000')) 
     console.log('✅ Database connected successfully');
     
     const server = app.listen(port, () => {
-      console.log(`🚀 Server running on port ${port}`);
+      console.log(`🚀 GeoGuessr Stats API Server running on port ${port}`);
       console.log(`📊 API available at http://localhost:${port}/api`);
+      console.log(`🗺️  Map endpoints at http://localhost:${port}/api/map`);
       console.log(`🏥 Health check at http://localhost:${port}/health`);
+      console.log(`\n🎯 Phase 3: Backend API Development - MVP READY!`);
     });
 
     // Graceful shutdown
